@@ -407,6 +407,7 @@ function bcdiv_cust( $first, $second, $scale = 0 )
             $buttonarray2[0] = &$mform->createElement('submit', 'loadUser', get_string('pathway_semester_loaduser','pathfinder'));
             $buttonarray2[1] = &$mform->createElement('submit', 'saveUser', get_string('pathway_semester_saveuser','pathfinder'));
             $mform->addElement('text', 'newUser', get_string('pathway_semester_newUser_label','pathfinder'));
+            $mform->setType('newUser', PARAM_TEXT);
             $buttonarray2[2] = &$mform->createElement('submit', 'saveUser', get_string('pathway_semester_newUser','pathfinder'));
 			$mform->addGroup($buttonarray2, 'buttonar', '', array(' '), false);
 			$mform->closeHeaderBefore('buttonar');
@@ -451,6 +452,7 @@ function bcdiv_cust( $first, $second, $scale = 0 )
 							// semester, year	
 							$mform->addElement( 'static', null, get_string('pathfinder_semester', 'pathfinder'), $pathfinder->currentSemester );
 							$mform->addElement( 'hidden', 'semester', $pathfinder->currentSemester );
+							$mform->setType('semester', PARAM_INT);
 							$mform->addElement( 'static', null, get_string('pathfinder_year', 'pathfinder'), $pathfinder->currentYear );
 							#$mform->addElement('html', '<td>Object 1</td><td>Object 1</td><td>Object 2</td><td>Object 3</td>');
 						
@@ -583,7 +585,7 @@ function bcdiv_cust( $first, $second, $scale = 0 )
 	# require_once('PATH_TO/simplehtml_form.php');
 	 
 	//Instantiate simplehtml_form 
-	$mform = new form_simplehtml( array('id'=>$id) );
+	$mform = new form_simplehtml( null, array('id'=>$id) );
 	 
 	// Form processing and displaying is done here
 	# do stuff here

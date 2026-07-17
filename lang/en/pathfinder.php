@@ -95,3 +95,6 @@ $string['pathfinder_cancelled']				=	'Your changes have been reverted back to th
 # index.php
 $string['pathfinder_found_instances']		=	'Pathfinder Instances';
 $string['pathfinder_notfound_instances']	=	'There are no instances found in the database associated with Pathfinder.';
+$string['pathfinder:addinstance'] = 'Add a new Pathfinder';
+$string['pathfinder:view'] = 'View Pathfinder';
+$string['pathfinder:submit'] = 'Submit Pathfinder';
