@@ -226,8 +226,19 @@ if( !has_capability('mod/folder:managefiles', $context )) {
 			
 			// are there duplicated courses? find out and report to dashboard
 			#$sql = 'SELECT * FROM {pathfinder_data} WHERE program = ' .$pathfinder->program .' ORDER BY sortorder ASC';
-      $sql = 'SELECT `mdl_pathfinder_data`.*, `mdl_pathfinder_data`.`sortorder`, COUNT( `mdl_lesson`.`id` ) AS `sessions` FROM `n2ncu_online`.`mdl_pathfinder_data` AS `mdl_pathfinder_data`, `n2ncu_online`.`mdl_lesson` AS `mdl_lesson` WHERE `mdl_pathfinder_data`.`course` = `mdl_lesson`.`course` AND `mdl_pathfinder_data`.`program` = ' .$pathfinder->program .' GROUP BY `mdl_pathfinder_data`.`course` ORDER BY `mdl_pathfinder_data`.`sortorder` ASC';
-			$result = $DB->get_records_sql($sql);
+      // N2NCU 2026-07-29: was pinned to the production database by name
+      // (`n2ncu_online`.`mdl_pathfinder_data`), so this page failed with
+      // "SELECT command denied" on every clone. Now uses Moodle's {table}
+      // placeholders, which expand to the configured prefix on any install.
+      // The aliases keep their original names so the rest of the query is
+      // unchanged, and $pathfinder->program moved to a bound parameter.
+      $sql = 'SELECT mdl_pathfinder_data.*, mdl_pathfinder_data.sortorder, COUNT( mdl_lesson.id ) AS sessions
+                FROM {pathfinder_data} AS mdl_pathfinder_data, {lesson} AS mdl_lesson
+               WHERE mdl_pathfinder_data.course = mdl_lesson.course
+                 AND mdl_pathfinder_data.program = :program
+            GROUP BY mdl_pathfinder_data.course
+            ORDER BY mdl_pathfinder_data.sortorder ASC';
+			$result = $DB->get_records_sql($sql, ['program' => $pathfinder->program]);
       
       foreach( $result as $key => $value)
         $result[$key]->credits = floorToFraction($value->sessions * 0.375, 2);

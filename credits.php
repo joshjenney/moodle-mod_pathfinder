@@ -9,7 +9,13 @@ error_reporting(-1);
 
 global $CFG, $DB, $USER;
 
-$sql = "SELECT `mdl_course`.`id`, `mdl_course`.`shortname`, `mdl_course`.`fullname`, COUNT( `mdl_lesson`.`name` ) as `sessions` FROM `n2ncu_online`.`mdl_course` AS `mdl_course`, `n2ncu_online`.`mdl_lesson` AS `mdl_lesson` WHERE `mdl_course`.`id` = `mdl_lesson`.`course` GROUP by `mdl_course`.`fullname` ORDER BY `mdl_course`.`fullname`";
+// N2NCU 2026-07-29: was pinned to the production database by name, so this
+// failed on every clone. Uses {table} placeholders now; aliases unchanged.
+$sql = "SELECT mdl_course.id, mdl_course.shortname, mdl_course.fullname, COUNT( mdl_lesson.name ) as sessions
+          FROM {course} AS mdl_course, {lesson} AS mdl_lesson
+         WHERE mdl_course.id = mdl_lesson.course
+      GROUP by mdl_course.fullname
+      ORDER BY mdl_course.fullname";
 
 $result = $DB->get_records_sql($sql);
 
