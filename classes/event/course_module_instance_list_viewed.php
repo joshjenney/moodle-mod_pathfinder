@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,23 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
- * Defines the version of pathfinder
- *
- * This code fragment is called by moodle_needs_upgrading() and
- * /admin/index.php
+ * The mod_pathfinder instance list viewed event.
  *
  * @package    mod_pathfinder
- * @copyright  2011 Your Name
+ * @copyright  2026 N2NCU
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace mod_pathfinder\event;
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026072700;      // The current module version (Date: YYYYMMDDXX).
-$plugin->requires  = 2022112800;      // Moodle 4.1 (Build: 20221128).
-$plugin->supported = [401, 405];      // Moodle 4.1 to 4.5.
-$plugin->component = 'mod_pathfinder'; // To check on upgrade, that module sits in correct place.
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0';
+/**
+ * The mod_pathfinder instance list viewed event class.
+ *
+ * Replaces the legacy add_to_log() call removed from index.php.
+ */
+class course_module_instance_list_viewed extends \core\event\course_module_instance_list_viewed {
+}
