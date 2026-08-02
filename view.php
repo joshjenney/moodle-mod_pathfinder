@@ -41,7 +41,18 @@ if ($id) {
     $course     = $DB->get_record('course', array('id' => $pathfinder->course), '*', MUST_EXIST);
     $cm         = get_coursemodule_from_instance('pathfinder', $pathfinder->id, $course->id, false, MUST_EXIST);
 } else {
-	error('You must specify a course_module ID or an instance ID');
+    // N2NCU 2026-08-02: was error(), deprecated since Moodle 2.0. Its stub in
+    // lib/deprecatedlib.php is itself broken - it throws a coding_exception
+    // referencing $link and $message, neither of which exists in its scope - so
+    // reaching this branch produced "Coding error detected" plus two undefined
+    // variable notices instead of the intended message. True on 4.1 and 4.5
+    // alike; found by tools/smoke-crawl.sh, which requests this page with no
+    // parameters and therefore lands here every time.
+    //
+    // 'missingparameter' is a core string ("Parameter missing"). The original
+    // English sentence was passed as the error CODE, which would only ever have
+    // rendered as [[You must specify...]].
+    throw new moodle_exception('missingparameter');
 }
 
 require_login($course, true, $cm);
