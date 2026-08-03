@@ -249,14 +249,26 @@ function pathfinder_scale_used($pathfinderid, $scaleid) {
  * @return boolean true if the scale is used by any pathfinder instance
  */
 function pathfinder_scale_used_anywhere($scaleid) {
-    global $DB;
-
-    /** @example */
-    if ($scaleid and $DB->record_exists('pathfinder', array('grade' => -$scaleid))) {
-        return true;
-    } else {
-        return false;
-    }
+    // N2NCU 2026-08-02: this was the unadapted NEWMODULE template body -
+    // note the /** @example */ marker it still carried:
+    //
+    //     if ($scaleid and $DB->record_exists('pathfinder', array('grade' => -$scaleid)))
+    //
+    // The `pathfinder` table has no `grade` column. pathfinder is not a graded
+    // activity and never has been, so the template's example query was never
+    // adapted and never could have worked.
+    //
+    // The damage was not local. Core calls every plugin's
+    // scale_used_anywhere() from grade_scale::is_used(), via
+    // get_plugins_with_function() - so this one threw a dml exception
+    // (ddlfieldnotexist, from where_clause() building a condition on a column
+    // that does not exist) and took out the SITE-WIDE Scales admin page,
+    // /grade/edit/scale/index.php, for every administrator.
+    //
+    // Returning false is both correct and what mod_tracker already does for the
+    // same reason. Found by tools/smoke-crawl.sh in moodle-core-patches, which
+    // reached the scales page by following a link from reportbuilder.
+    return false;
 }
 
 /**
