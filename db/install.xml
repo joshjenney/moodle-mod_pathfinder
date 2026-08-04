@@ -21,5 +21,54 @@
         <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
       </INDEXES>
     </TABLE>
+    <!--
+      N2NCU 2026-08-03, TECH_DEBT 3. The three tables below hold every row this
+      plugin's data actually lives in, and none of them was declared: on the 4.1
+      database `pathfinder` - the only declared table - holds 1 row, while
+      pathfinder_data holds 808, pathfinder_users 63 and pathfinder_program 19.
+
+      They are read by name in ten files (mod/pathfinder/view.php, four
+      enrol/paypal and enrol/self libs, both completionstatus blocks,
+      course/classes/n2ncu_category_get_course_records.php,
+      enrol/subscription/n2ncu_lib_enrol_page_hook.php and
+      mod/biblereader/classes/planner.php), so a fresh install created none of
+      them and fataled with "unknown column" on the first course listing.
+
+      Declared to match the deployed schema exactly rather than to Moodle house
+      style: LENGTH 9 gives MySQL INT, which is what is deployed. Using the more
+      idiomatic LENGTH 10 would emit BIGINT and make check_database_schema.php
+      report a mismatch on every existing install forever, which costs more than
+      it buys - that tool is only useful while its output stays quiet.
+    -->
+    <TABLE NAME="pathfinder_data" COMMENT="Maps a program to its courses, in order. The pathfinder_data row-per-course table.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="program" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false" COMMENT="pathfinder_program.id"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false" COMMENT="course.id - not enforced, and TECH_DEBT 25 is a row pointing at a deleted course"/>
+        <FIELD NAME="category" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false" COMMENT="course_categories.id"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="pathfinder_program" COMMENT="One row per degree program.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="description" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Deployed as mediumtext; XMLDB emits longtext, which is the one unavoidable difference here."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="pathfinder_users" COMMENT="Which program a user is on. NOTE: id is the USER id, not a sequence - see the field comment.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false" COMMENT="This is user.id, NOT an auto-increment key. Deployed as a plain int primary key with no AUTO_INCREMENT, and the 63 rows are 63 users. Declared SEQUENCE=false to match. Consequence worth knowing: $DB-&gt;insert_record() on this table cannot allocate an id, so callers must set it explicitly."/>
+        <FIELD NAME="program" TYPE="int" LENGTH="9" NOTNULL="true" SEQUENCE="false" COMMENT="pathfinder_program.id"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
   </TABLES>
 </XMLDB>
