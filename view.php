@@ -41,7 +41,18 @@ if ($id) {
     $course     = $DB->get_record('course', array('id' => $pathfinder->course), '*', MUST_EXIST);
     $cm         = get_coursemodule_from_instance('pathfinder', $pathfinder->id, $course->id, false, MUST_EXIST);
 } else {
-	error('You must specify a course_module ID or an instance ID');
+    // N2NCU 2026-08-02: was error(), deprecated since Moodle 2.0. Its stub in
+    // lib/deprecatedlib.php is itself broken - it throws a coding_exception
+    // referencing $link and $message, neither of which exists in its scope - so
+    // reaching this branch produced "Coding error detected" plus two undefined
+    // variable notices instead of the intended message. True on 4.1 and 4.5
+    // alike; found by tools/smoke-crawl.sh, which requests this page with no
+    // parameters and therefore lands here every time.
+    //
+    // 'missingparameter' is a core string ("Parameter missing"). The original
+    // English sentence was passed as the error CODE, which would only ever have
+    // rendered as [[You must specify...]].
+    throw new moodle_exception('missingparameter');
 }
 
 require_login($course, true, $cm);
@@ -226,8 +237,19 @@ if( !has_capability('mod/folder:managefiles', $context )) {
 			
 			// are there duplicated courses? find out and report to dashboard
 			#$sql = 'SELECT * FROM {pathfinder_data} WHERE program = ' .$pathfinder->program .' ORDER BY sortorder ASC';
-      $sql = 'SELECT `mdl_pathfinder_data`.*, `mdl_pathfinder_data`.`sortorder`, COUNT( `mdl_lesson`.`id` ) AS `sessions` FROM `n2ncu_online`.`mdl_pathfinder_data` AS `mdl_pathfinder_data`, `n2ncu_online`.`mdl_lesson` AS `mdl_lesson` WHERE `mdl_pathfinder_data`.`course` = `mdl_lesson`.`course` AND `mdl_pathfinder_data`.`program` = ' .$pathfinder->program .' GROUP BY `mdl_pathfinder_data`.`course` ORDER BY `mdl_pathfinder_data`.`sortorder` ASC';
-			$result = $DB->get_records_sql($sql);
+      // N2NCU 2026-07-29: was pinned to the production database by name
+      // (`n2ncu_online`.`mdl_pathfinder_data`), so this page failed with
+      // "SELECT command denied" on every clone. Now uses Moodle's {table}
+      // placeholders, which expand to the configured prefix on any install.
+      // The aliases keep their original names so the rest of the query is
+      // unchanged, and $pathfinder->program moved to a bound parameter.
+      $sql = 'SELECT mdl_pathfinder_data.*, mdl_pathfinder_data.sortorder, COUNT( mdl_lesson.id ) AS sessions
+                FROM {pathfinder_data} AS mdl_pathfinder_data, {lesson} AS mdl_lesson
+               WHERE mdl_pathfinder_data.course = mdl_lesson.course
+                 AND mdl_pathfinder_data.program = :program
+            GROUP BY mdl_pathfinder_data.course
+            ORDER BY mdl_pathfinder_data.sortorder ASC';
+			$result = $DB->get_records_sql($sql, ['program' => $pathfinder->program]);
       
       foreach( $result as $key => $value)
         $result[$key]->credits = floorToFraction($value->sessions * 0.375, 2);
@@ -407,6 +429,7 @@ function bcdiv_cust( $first, $second, $scale = 0 )
             $buttonarray2[0] = &$mform->createElement('submit', 'loadUser', get_string('pathway_semester_loaduser','pathfinder'));
             $buttonarray2[1] = &$mform->createElement('submit', 'saveUser', get_string('pathway_semester_saveuser','pathfinder'));
             $mform->addElement('text', 'newUser', get_string('pathway_semester_newUser_label','pathfinder'));
+            $mform->setType('newUser', PARAM_TEXT);
             $buttonarray2[2] = &$mform->createElement('submit', 'saveUser', get_string('pathway_semester_newUser','pathfinder'));
 			$mform->addGroup($buttonarray2, 'buttonar', '', array(' '), false);
 			$mform->closeHeaderBefore('buttonar');
@@ -451,6 +474,7 @@ function bcdiv_cust( $first, $second, $scale = 0 )
 							// semester, year	
 							$mform->addElement( 'static', null, get_string('pathfinder_semester', 'pathfinder'), $pathfinder->currentSemester );
 							$mform->addElement( 'hidden', 'semester', $pathfinder->currentSemester );
+							$mform->setType('semester', PARAM_INT);
 							$mform->addElement( 'static', null, get_string('pathfinder_year', 'pathfinder'), $pathfinder->currentYear );
 							#$mform->addElement('html', '<td>Object 1</td><td>Object 1</td><td>Object 2</td><td>Object 3</td>');
 						
@@ -583,7 +607,7 @@ function bcdiv_cust( $first, $second, $scale = 0 )
 	# require_once('PATH_TO/simplehtml_form.php');
 	 
 	//Instantiate simplehtml_form 
-	$mform = new form_simplehtml( array('id'=>$id) );
+	$mform = new form_simplehtml( null, array('id'=>$id) );
 	 
 	// Form processing and displaying is done here
 	# do stuff here

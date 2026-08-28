@@ -25,7 +25,13 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(__DIR__ . "../../config.php");
+// N2NCU 2026-08-02: was __DIR__ . "../../config.php" - missing the leading slash.
+// __DIR__ has no trailing slash, so that resolved to
+// ".../mod/pathfinder../../config.php", which does not exist. The require_once
+// failed, Moodle never bootstrapped, and the page died with a raw PHP fatal and
+// no error page - a 200 on 4.1 (output already sent) and a 500 on 4.5. Broken on
+// both versions, so not an upgrade regression. Found by tools/smoke-crawl.sh.
+require_once(__DIR__ . "/../../config.php");
 
 $id = required_param('id', PARAM_INT);          // Course module ID
 $itemnumber = optional_param('itemnumber', 0, PARAM_INT); // Item number, may be != 0 for activities that allow more than one grade per user
