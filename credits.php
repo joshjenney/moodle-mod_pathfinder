@@ -29,7 +29,15 @@ exit;
 ////////////////// HELPER FUNCTIONS //////////////////
 
 function exception_handler($exception) {
-  error_log("Uncaught exception: " .$exception->getMessage() .PHP_EOL, 3, '/opt/lampp/logs/php_error_log');
+
+  // custom log file
+  if (isset($CFG->logroot)) {
+    define('ERROR_LOG_PATH', $CFG->logroot .'/mod/pathfinder/error.log');
+  } else {
+    define('ERROR_LOG_PATH', __DIR__ .'/error.log');
+  }
+  
+  error_log( date('[Y-m-d H:i e] ') ."Uncaught exception: " .$exception->getMessage() .PHP_EOL, 3, ERROR_LOG_PATH);
 }
 
 function floorToFraction($number, $denominator = 1)
