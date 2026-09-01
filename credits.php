@@ -29,15 +29,40 @@ exit;
 ////////////////// HELPER FUNCTIONS //////////////////
 
 function exception_handler($exception) {
+  global $CFG;
 
-  // custom log file
-  if (isset($CFG->logroot)) {
-    define('ERROR_LOG_PATH', $CFG->logroot .'/mod/pathfinder/error.log');
-  } else {
-    define('ERROR_LOG_PATH', __DIR__ .'/error.log');
+  // N2NCU: $CFG has to be imported here. Without it, the previous
+  // isset($CFG->logroot) test was reading an undefined variable and was always
+  // false, so every exception took the fallback - which wrote error.log into
+  // this directory, i.e. inside the web root, where the server can serve it.
+  //
+  // $CFG->logroot is also not a Moodle setting: core does not set it and it is
+  // not in the N2NCU config.php, so the intended branch could never have been
+  // reached even with $CFG in scope. $CFG->dataroot is the supported location
+  // for runtime files and sits outside the docroot by design.
+  //
+  // Deliberately not using make_writable_directory(): it throws on failure, and
+  // throwing from inside an exception handler discards the original exception.
+  $logpath = null;
+  if (!empty($CFG->dataroot)) {
+    $logdir = $CFG->dataroot . '/mod_pathfinder';
+    if (!is_dir($logdir)) {
+      @mkdir($logdir, 0777, true);
+    }
+    if (is_dir($logdir) && is_writable($logdir)) {
+      $logpath = $logdir . '/error.log';
+    }
   }
-  
-  error_log( date('[Y-m-d H:i e] ') ."Uncaught exception: " .$exception->getMessage() .PHP_EOL, 3, ERROR_LOG_PATH);
+
+  $message = date('[Y-m-d H:i e] ') . 'Uncaught exception: ' . $exception->getMessage() . PHP_EOL;
+
+  if ($logpath !== null) {
+    // A log that cannot be written must not break the thing it is logging.
+    @error_log($message, 3, $logpath);
+  } else {
+    // Last resort: the server's own error log, never the web root.
+    error_log($message);
+  }
 }
 
 function floorToFraction($number, $denominator = 1)
